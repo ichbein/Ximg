@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ximg</title>
+    <link rel="icon" type="image/png" href="favicon1.png">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main class="app">
+
+    <header class="header">
+        <h1>Ximg</h1>
+        <p>
+            Compress and optimize your images while removing unnecessary metadata.
+            Everything is processed locally on your device.
+        </p>
+    </header>
+
+    <section class="upload-section">
+        <div class="drop-zone" id="dropZone">
+            <div class="upload-icon">+</div>
+            <h2>Drop images here</h2>
+            <p>JPG, JPEG, PNG and WebP</p>
+
+            <button id="selectButton" type="button">
+                Select Images
+            </button>
+
+            <input
+                    type="file"
+                    id="fileInput"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    hidden
+            >
+        </div>
+    </section>
+
+    <section class="settings">
+
+        <div class="setting-group">
+            <h2>Compression</h2>
+
+            <div class="setting-row">
+                <label for="quality">Quality</label>
+
+                <div class="quality-control">
+                    <input
+                            type="range"
+                            id="quality"
+                            min="10"
+                            max="100"
+                            value="80"
+                    >
+                    <span id="qualityValue">80%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <h2>Resize</h2>
+
+            <select id="resize">
+                <option value="original">Original</option>
+                <option value="1920">1920 px</option>
+                <option value="1280">1280 px</option>
+                <option value="800">800 px</option>
+                <option value="custom">Custom</option>
+            </select>
+
+            <input
+                    type="number"
+                    id="customWidth"
+                    placeholder="Width in pixels"
+                    min="1"
+                    hidden
+            >
+        </div>
+
+        <div class="setting-group">
+            <h2>Output Format</h2>
+
+            <select id="outputFormat">
+                <option value="original">Original Format</option>
+                <option value="image/jpeg">JPG</option>
+                <option value="image/webp">WebP</option>
+                <option value="image/png">PNG</option>
+            </select>
+        </div>
+
+        <div class="setting-group metadata-setting">
+            <label class="checkbox-label">
+                <input
+                        type="checkbox"
+                        id="removeMetadata"
+                        checked
+                        disabled
+                >
+                <span>Remove metadata automatically</span>
+            </label>
+
+            <p>
+                EXIF and image metadata are removed automatically during processing.
+            </p>
+        </div>
+
+        <button
+                id="compressButton"
+                class="compress-button"
+                type="button"
+        >
+            Compress Images
+        </button>
+
+        <div class="progress-container" id="progressContainer" hidden>
+            <div class="progress-top">
+                <span id="progressText">Processing...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+    </section>
+
+    <section class="files-section">
+
+        <div class="section-header">
+            <h2>Selected Images</h2>
+
+            <div class="section-actions">
+                <span id="fileCount">0 images</span>
+                <button id="clearFilesButton" type="button">Clear All</button>
+            </div>
+        </div>
+
+        <div id="fileList" class="file-list">
+            <div class="empty-state" id="fileEmptyState">
+                <div class="empty-icon">+</div>
+                <p>No images selected</p>
+                <span>Select or drop images above to get started.</span>
+            </div>
+        </div>
+
+    </section>
+
+    <section
+            class="results-section"
+            id="resultsSection"
+            hidden
+    >
+
+        <div class="section-header">
+            <h2>Results</h2>
+
+            <button id="clearResultsButton" type="button">
+                Clear Results
+            </button>
+        </div>
+
+        <div id="resultsList" class="results-list"></div>
+
+        <div class="summary">
+
+            <div>
+                <span>Before</span>
+                <strong id="totalBefore">0 B</strong>
+            </div>
+
+            <div>
+                <span>After</span>
+                <strong id="totalAfter">0 B</strong>
+            </div>
+
+            <div>
+                <span>Saved</span>
+                <strong id="totalSaved">0%</strong>
+            </div>
+
+        </div>
+
+        <button
+                id="downloadAllButton"
+                class="download-button"
+                type="button"
+                hidden
+        >
+            Download All
+        </button>
+
+    </section>
+
+    <footer>
+        <p>Your images are processed locally on your device.</p>
+    </footer>
+
+</main>
+
+<script src="script.js"></script>
+
+</body>
+</html>

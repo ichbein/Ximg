@@ -1,0 +1,16 @@
+{
+  "name": "Ximg",
+  "short_name": "Ximg",
+  "description": "Local image compressor and metadata remover.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "favicon1.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
