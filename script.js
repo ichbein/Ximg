@@ -1,9 +1,12 @@
+console.log("XIMG SCRIPT LOADED");
+
 const fileInput = document.getElementById("fileInput");
 const selectButton = document.getElementById("selectButton");
 const dropZone = document.getElementById("dropZone");
 
 const quality = document.getElementById("quality");
 const qualityValue = document.getElementById("qualityValue");
+const compressionPreset = document.getElementById("compressionPreset");
 
 const resize = document.getElementById("resize");
 const customWidth = document.getElementById("customWidth");
@@ -22,15 +25,29 @@ const totalBefore = document.getElementById("totalBefore");
 const totalAfter = document.getElementById("totalAfter");
 const totalSaved = document.getElementById("totalSaved");
 
-const downloadAllButton = document.getElementById("downloadAllButton");
+const downloadAllButton =
+    document.getElementById("downloadAllButton");
 
-const progressContainer = document.getElementById("progressContainer");
-const progressText = document.getElementById("progressText");
-const progressPercent = document.getElementById("progressPercent");
-const progressFill = document.getElementById("progressFill");
+const downloadZipButton =
+    document.getElementById("downloadZipButton");
 
-const clearFilesButton = document.getElementById("clearFilesButton");
-const clearResultsButton = document.getElementById("clearResultsButton");
+const progressContainer =
+    document.getElementById("progressContainer");
+
+const progressText =
+    document.getElementById("progressText");
+
+const progressPercent =
+    document.getElementById("progressPercent");
+
+const progressFill =
+    document.getElementById("progressFill");
+
+const clearFilesButton =
+    document.getElementById("clearFilesButton");
+
+const clearResultsButton =
+    document.getElementById("clearResultsButton");
 
 let selectedFiles = [];
 let compressedResults = [];
@@ -40,6 +57,7 @@ const resultURLs = new Set();
 
 resultsSection.hidden = true;
 downloadAllButton.hidden = true;
+downloadZipButton.hidden = true;
 progressContainer.hidden = true;
 
 selectButton.addEventListener("click", () => {
@@ -67,9 +85,43 @@ dropZone.addEventListener("drop", event => {
     addFiles(event.dataTransfer.files);
 });
 
+compressionPreset.addEventListener("change", () => {
+    switch (compressionPreset.value) {
+        case "balanced":
+            quality.value = "80";
+            resize.value = "1920";
+            outputFormat.value = "image/webp";
+            break;
+
+        case "small":
+            quality.value = "65";
+            resize.value = "1280";
+            outputFormat.value = "image/webp";
+            break;
+
+        case "maximum":
+            quality.value = "50";
+            resize.value = "800";
+            outputFormat.value = "image/webp";
+            break;
+
+        case "custom":
+        default:
+            return;
+    }
+
+    customWidth.value = "";
+    customWidth.hidden = true;
+
+    quality.disabled = false;
+    qualityValue.textContent = `${quality.value}%`;
+});
+
 quality.addEventListener("input", () => {
-    if (!quality.disabled) {
-        qualityValue.textContent = `${quality.value}%`;
+    qualityValue.textContent = `${quality.value}%`;
+
+    if (compressionPreset.value !== "custom") {
+        compressionPreset.value = "custom";
     }
 });
 
@@ -79,16 +131,29 @@ resize.addEventListener("change", () => {
     if (resize.value !== "custom") {
         customWidth.value = "";
     }
+
+    if (compressionPreset.value !== "custom") {
+        compressionPreset.value = "custom";
+    }
+});
+
+customWidth.addEventListener("input", () => {
+    compressionPreset.value = "custom";
 });
 
 outputFormat.addEventListener("change", () => {
-    const isPNG = outputFormat.value === "image/png";
+    const isPNG =
+        outputFormat.value === "image/png";
 
     quality.disabled = isPNG;
 
     qualityValue.textContent = isPNG
         ? "N/A"
         : `${quality.value}%`;
+
+    if (compressionPreset.value !== "custom") {
+        compressionPreset.value = "custom";
+    }
 });
 
 compressButton.addEventListener("click", async () => {
@@ -99,7 +164,8 @@ compressButton.addEventListener("click", async () => {
 
     if (
         resize.value === "custom" &&
-        (!customWidth.value || Number(customWidth.value) <= 0)
+        (!customWidth.value ||
+            Number(customWidth.value) <= 0)
     ) {
         alert("Enter a valid custom width.");
         customWidth.focus();
@@ -118,18 +184,26 @@ compressButton.addEventListener("click", async () => {
     progressContainer.hidden = false;
     progressFill.style.width = "0%";
     progressPercent.textContent = "0%";
+
     progressText.textContent =
         `Processing 0 of ${selectedFiles.length}`;
 
-    for (let i = 0; i < selectedFiles.length; i++) {
+    for (
+        let i = 0;
+        i < selectedFiles.length;
+        i++
+    ) {
         const file = selectedFiles[i];
 
         try {
-            const result = await compressImage(file);
+            const result =
+                await compressImage(file);
+
             compressedResults.push(result);
         } catch (error) {
             file.processingError =
-                error.message || "Processing failed.";
+                error.message ||
+                "Processing failed.";
 
             console.error(
                 `Failed to process ${file.name}:`,
@@ -138,12 +212,20 @@ compressButton.addEventListener("click", async () => {
         }
 
         const completed = i + 1;
-        const percentage = Math.round(
-            (completed / selectedFiles.length) * 100
-        );
 
-        progressFill.style.width = `${percentage}%`;
-        progressPercent.textContent = `${percentage}%`;
+        const percentage =
+            Math.round(
+                (completed /
+                    selectedFiles.length) *
+                100
+            );
+
+        progressFill.style.width =
+            `${percentage}%`;
+
+        progressPercent.textContent =
+            `${percentage}%`;
+
         progressText.textContent =
             `Processing ${completed} of ${selectedFiles.length}`;
 
@@ -153,7 +235,8 @@ compressButton.addEventListener("click", async () => {
     renderResults();
 
     progressText.textContent =
-        compressedResults.length === selectedFiles.length
+        compressedResults.length ===
+        selectedFiles.length
             ? "Completed"
             : "Completed with errors";
 
@@ -161,59 +244,117 @@ compressButton.addEventListener("click", async () => {
     progressFill.style.width = "100%";
 
     compressButton.disabled = false;
-    compressButton.textContent = "Compress Images";
+    compressButton.textContent =
+        "Compress Images";
 });
 
 downloadAllButton.addEventListener("click", () => {
-    compressedResults.forEach((result, index) => {
-        setTimeout(() => {
-            downloadBlob(result.blob, result.name);
-        }, index * 200);
-    });
+    compressedResults.forEach(
+        (result, index) => {
+            setTimeout(() => {
+                downloadBlob(
+                    result.blob,
+                    result.name
+                );
+            }, index * 200);
+        }
+    );
 });
 
-clearFilesButton.addEventListener("click", () => {
-    cleanupURLs();
+downloadZipButton.addEventListener(
+    "click",
+    async () => {
+        if (
+            compressedResults.length === 0
+        ) {
+            return;
+        }
 
-    selectedFiles = [];
-    compressedResults = [];
+        downloadZipButton.disabled = true;
+        downloadZipButton.textContent =
+            "Creating ZIP...";
 
-    renderFiles();
-    clearResultsUI();
+        try {
+            const zipBlob =
+                await createZip(
+                    compressedResults
+                );
 
-    progressContainer.hidden = true;
-});
+            downloadBlob(
+                zipBlob,
+                "ximg-compressed.zip"
+            );
+        } catch (error) {
+            console.error(
+                "ZIP creation failed:",
+                error
+            );
 
-clearResultsButton.addEventListener("click", () => {
-    cleanupURLs();
+            alert(
+                "Could not create the ZIP file."
+            );
+        }
 
-    compressedResults = [];
+        downloadZipButton.disabled = false;
+        downloadZipButton.textContent =
+            "Download ZIP";
+    }
+);
 
-    clearResultsUI();
+clearFilesButton.addEventListener(
+    "click",
+    () => {
+        cleanupURLs();
 
-    selectedFiles.forEach(file => {
-        file.processingError = null;
-    });
+        selectedFiles = [];
+        compressedResults = [];
 
-    renderFiles();
-});
+        renderFiles();
+        clearResultsUI();
+
+        progressContainer.hidden = true;
+    }
+);
+
+clearResultsButton.addEventListener(
+    "click",
+    () => {
+        cleanupURLs();
+
+        compressedResults = [];
+
+        clearResultsUI();
+
+        selectedFiles.forEach(file => {
+            file.processingError = null;
+        });
+
+        renderFiles();
+    }
+);
 
 function addFiles(files) {
-    const imageFiles = Array.from(files).filter(file =>
-        [
-            "image/jpeg",
-            "image/png",
-            "image/webp"
-        ].includes(file.type)
-    );
+    const imageFiles =
+        Array.from(files).filter(file =>
+            [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ].includes(file.type)
+        );
 
-    const newFiles = imageFiles.filter(file =>
-        !selectedFiles.some(existingFile =>
-            existingFile.name === file.name &&
-            existingFile.size === file.size &&
-            existingFile.lastModified === file.lastModified
-        )
-    );
+    const newFiles =
+        imageFiles.filter(file =>
+            !selectedFiles.some(
+                existingFile =>
+                    existingFile.name ===
+                    file.name &&
+                    existingFile.size ===
+                    file.size &&
+                    existingFile.lastModified ===
+                    file.lastModified
+            )
+        );
 
     selectedFiles = [
         ...selectedFiles,
@@ -236,17 +377,27 @@ function renderFiles() {
         }`;
 
     if (selectedFiles.length === 0) {
-        const emptyState = document.createElement("div");
-        emptyState.className = "empty-state";
+        const emptyState =
+            document.createElement("div");
 
-        const icon = document.createElement("div");
+        emptyState.className =
+            "empty-state";
+
+        const icon =
+            document.createElement("div");
+
         icon.className = "empty-icon";
         icon.textContent = "+";
 
-        const text = document.createElement("p");
-        text.textContent = "No images selected";
+        const text =
+            document.createElement("p");
 
-        const description = document.createElement("span");
+        text.textContent =
+            "No images selected";
+
+        const description =
+            document.createElement("span");
+
         description.textContent =
             "Select or drop images above to get started.";
 
@@ -256,83 +407,130 @@ function renderFiles() {
             description
         );
 
-        fileList.appendChild(emptyState);
+        fileList.appendChild(
+            emptyState
+        );
 
         return;
     }
 
-    selectedFiles.forEach((file, index) => {
-        const item = document.createElement("div");
-        item.className = "file-item";
+    selectedFiles.forEach(
+        (file, index) => {
+            const item =
+                document.createElement("div");
 
-        const preview = document.createElement("img");
-        preview.className = "file-preview";
-        preview.alt = "";
+            item.className = "file-item";
 
-        const imageURL = URL.createObjectURL(file);
-        previewURLs.add(imageURL);
-        preview.src = imageURL;
+            const preview =
+                document.createElement("img");
 
-        preview.onload = () => {
-            URL.revokeObjectURL(imageURL);
-            previewURLs.delete(imageURL);
-        };
+            preview.className =
+                "file-preview";
 
-        const info = document.createElement("div");
-        info.className = "file-info";
+            preview.alt = "";
 
-        const name = document.createElement("div");
-        name.className = "file-name";
-        name.textContent = file.name;
+            const imageURL =
+                URL.createObjectURL(file);
 
-        const size = document.createElement("div");
-        size.className = "file-size";
+            previewURLs.add(imageURL);
+            preview.src = imageURL;
 
-        if (file.processingError) {
-            size.textContent = file.processingError;
-            size.classList.add("error");
-        } else {
-            size.textContent =
-                formatFileSize(file.size);
+            preview.onload = () => {
+                URL.revokeObjectURL(
+                    imageURL
+                );
+
+                previewURLs.delete(
+                    imageURL
+                );
+            };
+
+            const info =
+                document.createElement("div");
+
+            info.className = "file-info";
+
+            const name =
+                document.createElement("div");
+
+            name.className = "file-name";
+            name.textContent = file.name;
+
+            const size =
+                document.createElement("div");
+
+            size.className = "file-size";
+
+            if (file.processingError) {
+                size.textContent =
+                    file.processingError;
+
+                size.classList.add("error");
+            } else {
+                size.textContent =
+                    formatFileSize(
+                        file.size
+                    );
+            }
+
+            const removeButton =
+                document.createElement(
+                    "button"
+                );
+
+            removeButton.className =
+                "remove-button";
+
+            removeButton.type = "button";
+            removeButton.textContent =
+                "Remove";
+
+            removeButton.addEventListener(
+                "click",
+                () => {
+                    selectedFiles.splice(
+                        index,
+                        1
+                    );
+
+                    renderFiles();
+                }
+            );
+
+            info.append(
+                name,
+                size
+            );
+
+            item.append(
+                preview,
+                info,
+                removeButton
+            );
+
+            fileList.appendChild(item);
         }
-
-        const removeButton =
-            document.createElement("button");
-
-        removeButton.className =
-            "remove-button";
-
-        removeButton.type = "button";
-        removeButton.textContent = "Remove";
-
-        removeButton.addEventListener("click", () => {
-            selectedFiles.splice(index, 1);
-            renderFiles();
-        });
-
-        info.append(name, size);
-        item.append(
-            preview,
-            info,
-            removeButton
-        );
-
-        fileList.appendChild(item);
-    });
+    );
 }
 
 async function compressImage(file) {
-    const image = await loadImage(file);
+    const image =
+        await loadImage(file);
 
-    if (!image.width || !image.height) {
+    if (
+        !image.width ||
+        !image.height
+    ) {
         throw new Error(
             "Invalid image dimensions."
         );
     }
 
     const maxPixels = 50000000;
+
     const totalPixels =
-        image.width * image.height;
+        image.width *
+        image.height;
 
     if (totalPixels > maxPixels) {
         throw new Error(
@@ -340,16 +538,20 @@ async function compressImage(file) {
         );
     }
 
-    const dimensions = calculateDimensions(
-        image.width,
-        image.height
-    );
+    const dimensions =
+        calculateDimensions(
+            image.width,
+            image.height
+        );
 
     const canvas =
         document.createElement("canvas");
 
-    canvas.width = dimensions.width;
-    canvas.height = dimensions.height;
+    canvas.width =
+        dimensions.width;
+
+    canvas.height =
+        dimensions.height;
 
     const context =
         canvas.getContext("2d");
@@ -368,7 +570,8 @@ async function compressImage(file) {
         dimensions.height
     );
 
-    let format = outputFormat.value;
+    let format =
+        outputFormat.value;
 
     if (format === "original") {
         format = file.type;
@@ -403,13 +606,16 @@ async function compressImage(file) {
             "source-over";
     }
 
-    const blob = await canvasToBlob(
-        canvas,
-        format,
-        format === "image/png"
-            ? undefined
-            : Number(quality.value) / 100
-    );
+    const blob =
+        await canvasToBlob(
+            canvas,
+            format,
+            format === "image/png"
+                ? undefined
+                : Number(
+                quality.value
+            ) / 100
+        );
 
     if (!blob || blob.size === 0) {
         throw new Error(
@@ -430,28 +636,37 @@ async function compressImage(file) {
 }
 
 function loadImage(file) {
-    return new Promise((resolve, reject) => {
-        const url =
-            URL.createObjectURL(file);
+    return new Promise(
+        (resolve, reject) => {
+            const url =
+                URL.createObjectURL(file);
 
-        const image = new Image();
+            const image =
+                new Image();
 
-        image.onload = () => {
-            URL.revokeObjectURL(url);
-            resolve(image);
-        };
+            image.onload = () => {
+                URL.revokeObjectURL(
+                    url
+                );
 
-        image.onerror = () => {
-            URL.revokeObjectURL(url);
-            reject(
-                new Error(
-                    "Could not read this image."
-                )
-            );
-        };
+                resolve(image);
+            };
 
-        image.src = url;
-    });
+            image.onerror = () => {
+                URL.revokeObjectURL(
+                    url
+                );
+
+                reject(
+                    new Error(
+                        "Could not read this image."
+                    )
+                );
+            };
+
+            image.src = url;
+        }
+    );
 }
 
 function calculateDimensions(
@@ -468,23 +683,26 @@ function calculateDimensions(
     let maxWidth;
 
     if (resize.value === "custom") {
-        maxWidth = Number(
-            customWidth.value
-        );
+        maxWidth =
+            Number(customWidth.value);
 
-        if (!maxWidth || maxWidth <= 0) {
+        if (
+            !maxWidth ||
+            maxWidth <= 0
+        ) {
             return {
                 width: originalWidth,
                 height: originalHeight
             };
         }
     } else {
-        maxWidth = Number(
-            resize.value
-        );
+        maxWidth =
+            Number(resize.value);
     }
 
-    if (originalWidth <= maxWidth) {
+    if (
+        originalWidth <= maxWidth
+    ) {
         return {
             width: originalWidth,
             height: originalHeight
@@ -492,15 +710,18 @@ function calculateDimensions(
     }
 
     const ratio =
-        maxWidth / originalWidth;
+        maxWidth /
+        originalWidth;
 
     return {
-        width: Math.round(
-            originalWidth * ratio
-        ),
-        height: Math.round(
-            originalHeight * ratio
-        )
+        width:
+            Math.round(
+                originalWidth * ratio
+            ),
+        height:
+            Math.round(
+                originalHeight * ratio
+            )
     };
 }
 
@@ -509,31 +730,33 @@ function canvasToBlob(
     type,
     qualityValue
 ) {
-    return new Promise((resolve, reject) => {
-        try {
-            canvas.toBlob(
-                blob => {
-                    if (blob) {
-                        resolve(blob);
-                    } else {
-                        reject(
-                            new Error(
-                                "Could not create output image."
-                            )
-                        );
-                    }
-                },
-                type,
-                qualityValue
-            );
-        } catch {
-            reject(
-                new Error(
-                    "Image encoding failed."
-                )
-            );
+    return new Promise(
+        (resolve, reject) => {
+            try {
+                canvas.toBlob(
+                    blob => {
+                        if (blob) {
+                            resolve(blob);
+                        } else {
+                            reject(
+                                new Error(
+                                    "Could not create output image."
+                                )
+                            );
+                        }
+                    },
+                    type,
+                    qualityValue
+                );
+            } catch {
+                reject(
+                    new Error(
+                        "Image encoding failed."
+                    )
+                );
+            }
         }
-    });
+    );
 }
 
 function createOutputName(
@@ -569,124 +792,143 @@ function renderResults() {
     let before = 0;
     let after = 0;
 
-    compressedResults.forEach(result => {
-        before += result.originalSize;
-        after += result.compressedSize;
+    compressedResults.forEach(
+        result => {
+            before +=
+                result.originalSize;
 
-        const item =
-            document.createElement("div");
+            after +=
+                result.compressedSize;
 
-        item.className = "result-item";
+            const item =
+                document.createElement("div");
 
-        const preview =
-            document.createElement("img");
+            item.className =
+                "result-item";
 
-        preview.className =
-            "result-preview";
+            const preview =
+                document.createElement("img");
 
-        preview.alt = "";
+            preview.className =
+                "result-preview";
 
-        const previewURL =
-            URL.createObjectURL(
-                result.blob
-            );
+            preview.alt = "";
 
-        resultURLs.add(previewURL);
-        preview.src = previewURL;
-
-        preview.onload = () => {
-            URL.revokeObjectURL(
-                previewURL
-            );
-
-            resultURLs.delete(
-                previewURL
-            );
-        };
-
-        const info =
-            document.createElement("div");
-
-        info.className =
-            "result-info";
-
-        const name =
-            document.createElement("div");
-
-        name.className =
-            "result-name";
-
-        name.textContent =
-            result.name;
-
-        const size =
-            document.createElement("div");
-
-        size.className =
-            "result-size";
-
-        size.textContent =
-            `${formatFileSize(
-                result.originalSize
-            )} → ${formatFileSize(
-                result.compressedSize
-            )}`;
-
-        const percentage =
-            result.originalSize > 0
-                ? (
-                (
-                    result.originalSize -
-                    result.compressedSize
-                ) /
-                result.originalSize
-            ) * 100
-                : 0;
-
-        const saving =
-            document.createElement("div");
-
-        saving.className =
-            "result-saving";
-
-        saving.textContent =
-            percentage >= 0
-                ? `Saved ${percentage.toFixed(1)}%`
-                : `+${Math.abs(
-                    percentage
-                ).toFixed(1)}%`;
-
-        const downloadButton =
-            document.createElement("button");
-
-        downloadButton.className =
-            "result-download";
-
-        downloadButton.type = "button";
-        downloadButton.textContent =
-            "Download";
-
-        downloadButton.addEventListener(
-            "click",
-            () => {
-                downloadBlob(
-                    result.blob,
-                    result.name
+            const previewURL =
+                URL.createObjectURL(
+                    result.blob
                 );
-            }
-        );
 
-        info.append(name, size);
+            resultURLs.add(
+                previewURL
+            );
 
-        item.append(
-            preview,
-            info,
-            saving,
-            downloadButton
-        );
+            preview.src =
+                previewURL;
 
-        resultsList.appendChild(item);
-    });
+            preview.onload = () => {
+                URL.revokeObjectURL(
+                    previewURL
+                );
+
+                resultURLs.delete(
+                    previewURL
+                );
+            };
+
+            const info =
+                document.createElement("div");
+
+            info.className =
+                "result-info";
+
+            const name =
+                document.createElement("div");
+
+            name.className =
+                "result-name";
+
+            name.textContent =
+                result.name;
+
+            const size =
+                document.createElement("div");
+
+            size.className =
+                "result-size";
+
+            size.textContent =
+                `${formatFileSize(
+                    result.originalSize
+                )} → ${formatFileSize(
+                    result.compressedSize
+                )}`;
+
+            const percentage =
+                result.originalSize > 0
+                    ? (
+                    (
+                        result.originalSize -
+                        result.compressedSize
+                    ) /
+                    result.originalSize
+                ) * 100
+                    : 0;
+
+            const saving =
+                document.createElement("div");
+
+            saving.className =
+                "result-saving";
+
+            saving.textContent =
+                percentage >= 0
+                    ? `Saved ${percentage.toFixed(1)}%`
+                    : `+${Math.abs(
+                        percentage
+                    ).toFixed(1)}%`;
+
+            const downloadButton =
+                document.createElement(
+                    "button"
+                );
+
+            downloadButton.className =
+                "result-download";
+
+            downloadButton.type =
+                "button";
+
+            downloadButton.textContent =
+                "Download";
+
+            downloadButton.addEventListener(
+                "click",
+                () => {
+                    downloadBlob(
+                        result.blob,
+                        result.name
+                    );
+                }
+            );
+
+            info.append(
+                name,
+                size
+            );
+
+            item.append(
+                preview,
+                info,
+                saving,
+                downloadButton
+            );
+
+            resultsList.appendChild(
+                item
+            );
+        }
+    );
 
     totalBefore.textContent =
         formatFileSize(before);
@@ -696,7 +938,10 @@ function renderResults() {
 
     const totalPercentage =
         before > 0
-            ? ((before - after) / before) * 100
+            ? (
+            (before - after) /
+            before
+        ) * 100
             : 0;
 
     totalSaved.textContent =
@@ -710,20 +955,36 @@ function renderResults() {
 
     downloadAllButton.hidden =
         !hasResults;
+
+    downloadZipButton.hidden =
+        !hasResults;
 }
 
 function clearResultsUI() {
     resultsList.innerHTML = "";
 
-    totalBefore.textContent = "0 B";
-    totalAfter.textContent = "0 B";
-    totalSaved.textContent = "0%";
+    totalBefore.textContent =
+        "0 B";
+
+    totalAfter.textContent =
+        "0 B";
+
+    totalSaved.textContent =
+        "0%";
 
     resultsSection.hidden = true;
-    downloadAllButton.hidden = true;
+
+    downloadAllButton.hidden =
+        true;
+
+    downloadZipButton.hidden =
+        true;
 }
 
-function downloadBlob(blob, filename) {
+function downloadBlob(
+    blob,
+    filename
+) {
     const url =
         URL.createObjectURL(blob);
 
@@ -734,7 +995,9 @@ function downloadBlob(blob, filename) {
     link.download = filename;
 
     document.body.appendChild(link);
+
     link.click();
+
     link.remove();
 
     setTimeout(() => {
@@ -775,24 +1038,362 @@ function formatFileSize(bytes) {
         "GB"
     ];
 
-    const index = Math.min(
-        Math.floor(
-            Math.log(bytes) /
-            Math.log(1024)
-        ),
-        units.length - 1
-    );
+    const index =
+        Math.min(
+            Math.floor(
+                Math.log(bytes) /
+                Math.log(1024)
+            ),
+            units.length - 1
+        );
 
     return `${(
         bytes /
-        Math.pow(1024, index)
+        Math.pow(
+            1024,
+            index
+        )
     ).toFixed(2)} ${units[index]}`;
+}
+
+async function createZip(results) {
+    const files = [];
+
+    for (const result of results) {
+        const data =
+            new Uint8Array(
+                await result.blob.arrayBuffer()
+            );
+
+        files.push({
+            name: result.name,
+            data
+        });
+    }
+
+    const localParts = [];
+    const centralParts = [];
+
+    let offset = 0;
+
+    for (const file of files) {
+        const nameBytes =
+            new TextEncoder().encode(
+                file.name
+            );
+
+        const crc =
+            crc32(file.data);
+
+        const localHeader =
+            new Uint8Array(30);
+
+        const localView =
+            new DataView(
+                localHeader.buffer
+            );
+
+        localView.setUint32(
+            0,
+            0x04034b50,
+            true
+        );
+
+        localView.setUint16(
+            4,
+            20,
+            true
+        );
+
+        localView.setUint16(
+            6,
+            0x0800,
+            true
+        );
+
+        localView.setUint16(
+            8,
+            0,
+            true
+        );
+
+        localView.setUint16(
+            10,
+            0,
+            true
+        );
+
+        localView.setUint16(
+            12,
+            0,
+            true
+        );
+
+        localView.setUint32(
+            14,
+            crc,
+            true
+        );
+
+        localView.setUint32(
+            18,
+            file.data.length,
+            true
+        );
+
+        localView.setUint32(
+            22,
+            file.data.length,
+            true
+        );
+
+        localView.setUint16(
+            26,
+            nameBytes.length,
+            true
+        );
+
+        localView.setUint16(
+            28,
+            0,
+            true
+        );
+
+        localParts.push(
+            localHeader,
+            nameBytes,
+            file.data
+        );
+
+        const centralHeader =
+            new Uint8Array(46);
+
+        const centralView =
+            new DataView(
+                centralHeader.buffer
+            );
+
+        centralView.setUint32(
+            0,
+            0x02014b50,
+            true
+        );
+
+        centralView.setUint16(
+            4,
+            20,
+            true
+        );
+
+        centralView.setUint16(
+            6,
+            20,
+            true
+        );
+
+        centralView.setUint16(
+            8,
+            0x0800,
+            true
+        );
+
+        centralView.setUint16(
+            10,
+            0,
+            true
+        );
+
+        centralView.setUint16(
+            12,
+            0,
+            true
+        );
+
+        centralView.setUint16(
+            14,
+            0,
+            true
+        );
+
+        centralView.setUint32(
+            16,
+            crc,
+            true
+        );
+
+        centralView.setUint32(
+            20,
+            file.data.length,
+            true
+        );
+
+        centralView.setUint32(
+            24,
+            file.data.length,
+            true
+        );
+
+        centralView.setUint16(
+            28,
+            nameBytes.length,
+            true
+        );
+
+        centralView.setUint16(
+            30,
+            0,
+            true
+        );
+
+        centralView.setUint16(
+            32,
+            0,
+            true
+        );
+
+        centralView.setUint16(
+            34,
+            0,
+            true
+        );
+
+        centralView.setUint16(
+            36,
+            0,
+            true
+        );
+
+        centralView.setUint32(
+            38,
+            0,
+            true
+        );
+
+        centralView.setUint32(
+            42,
+            offset,
+            true
+        );
+
+        centralParts.push(
+            centralHeader,
+            nameBytes
+        );
+
+        offset +=
+            localHeader.length +
+            nameBytes.length +
+            file.data.length;
+    }
+
+    const centralDirectorySize =
+        centralParts.reduce(
+            (total, part) =>
+                total + part.length,
+            0
+        );
+
+    const centralDirectoryOffset =
+        offset;
+
+    const endRecord =
+        new Uint8Array(22);
+
+    const endView =
+        new DataView(
+            endRecord.buffer
+        );
+
+    endView.setUint32(
+        0,
+        0x06054b50,
+        true
+    );
+
+    endView.setUint16(
+        8,
+        files.length,
+        true
+    );
+
+    endView.setUint16(
+        10,
+        files.length,
+        true
+    );
+
+    endView.setUint32(
+        12,
+        centralDirectorySize,
+        true
+    );
+
+    endView.setUint32(
+        16,
+        centralDirectoryOffset,
+        true
+    );
+
+    endView.setUint16(
+        20,
+        0,
+        true
+    );
+
+    return new Blob(
+        [
+            ...localParts,
+            ...centralParts,
+            endRecord
+        ],
+        {
+            type: "application/zip"
+        }
+    );
+}
+
+function crc32(data) {
+    let crc = 0xffffffff;
+
+    for (
+        let i = 0;
+        i < data.length;
+        i++
+    ) {
+        crc ^= data[i];
+
+        for (
+            let j = 0;
+            j < 8;
+            j++
+        ) {
+            crc =
+                (crc >>> 1) ^
+                (
+                    -(crc & 1) &
+                    0xedb88320
+                );
+        }
+    }
+
+    return (
+        crc ^ 0xffffffff
+    ) >>> 0;
 }
 
 renderFiles();
 
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js");
+        navigator.serviceWorker.register("./sw.js")
+            .then(() => {
+                console.log("Ximg service worker registered.");
+            })
+            .catch(error => {
+                console.error(
+                    "Service worker registration failed:",
+                    error
+                );
+            });
     });
 }

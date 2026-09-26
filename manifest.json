@@ -1,11 +1,12 @@
 {
-  "name": "Ximg",
+  "name": "Ximg - Image Compressor",
   "short_name": "Ximg",
-  "description": "Local image compressor and metadata remover.",
+  "description": "Compress images and remove unnecessary metadata locally on your device.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f4f5f7",
-  "theme_color": "#ffffff",
+  "theme_color": "#202124",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "favicon1.png",
