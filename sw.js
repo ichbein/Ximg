@@ -1,4 +1,4 @@
-const CACHE_NAME = "ximg-v1";
+const CACHE_NAME = "ximg-v3";
 
 const FILES_TO_CACHE = [
     "./",
